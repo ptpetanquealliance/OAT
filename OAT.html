@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Court Assignment Tool (CAT) - Multi-Surface Calculator (Local Storage)</title>
+    <style>
+        /* =====================================================================
+           CAT stylesheet - hand-written, zero external dependencies.
+           Replaces the Tailwind CDN runtime. Organized to mirror the utility
+           classes previously supplied by Tailwind, so class names in the
+           markup below are unchanged (a few that used characters CSS
+           selectors can't express - colons, brackets, slashes, dots - were
+           renamed to plain hyphenated equivalents; see the HTML diff).
+           ===================================================================== */
+
+        :root {
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+
+            --purple-100: #f3e8ff;
+            --purple-200: #e9d5ff;
+            --purple-500: #a855f7;
+            --purple-600: #9333ea;
+            --purple-700: #7e22ce;
+
+            --red-50:  #fef2f2;
+            --red-100: #fee2e2;
+            --red-200: #fecaca;
+            --red-500: #ef4444;
+            --red-600: #dc2626;
+            --red-700: #b91c1c;
+
+            --emerald-100: #d1fae5;
+            --emerald-700: #047857;
+        }
+
+        /* =====================================================================
+           Reset (replaces what Tailwind's "Preflight" used to provide).
+           Without this, browsers' own default UA styles for headings,
+           paragraphs, buttons, and form fields leak through underneath the
+           utility classes below - extra heading/paragraph margins, native
+           button borders/backgrounds/cursors, and inset input shadows are
+           the most visible symptoms. This block neutralizes all of that so
+           only the explicit utility classes below determine appearance.
+           ===================================================================== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            border-width: 0;
+            border-style: solid;
+            border-color: currentColor;
+        }
+
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        h1, h2, h3, h4, h5, h6, p, blockquote, figure, pre {
+            margin: 0;
+            font-size: inherit;
+            font-weight: inherit;
+        }
+
+        button, input, textarea, select {
+            font-family: inherit;
+            font-size: 100%;
+            font-weight: inherit;
+            line-height: inherit;
+            color: inherit;
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        button {
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: none;
+            cursor: pointer;
+            text-align: inherit;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #ffffff;
+        }
+
+        input[type="checkbox"] {
+            -webkit-appearance: checkbox;
+            appearance: checkbox;
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        textarea { resize: vertical; }
+
+        code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 1em;
+        }
+
+        table {
+            border-collapse: collapse;
+            text-indent: 0;
+        }
+
+        svg { display: block; vertical-align: middle; }
+
+        .antialiased { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+        /* ---- Custom scrollbar for wide tables (kept from original) ---- */
+        .table-container::-webkit-scrollbar { height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: var(--slate-100); border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+        /* ---- Layout: flex / grid ---- */
+        .flex { display: flex; }
+        .flex-1 { flex: 1 1 0%; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .grid { display: grid; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .col-span-1 { grid-column: span 1 / span 1; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-5 { gap: 1.25rem; }
+        .gap-6 { gap: 1.5rem; }
+
+        .block { display: block; }
+        .inline-block { display: inline-block; }
+        .hidden { display: none; }
+        .sticky { position: sticky; }
+        .left-0 { left: 0; }
+        .z-10 { z-index: 10; }
+
+        .overflow-x-auto { overflow-x: auto; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .max-w-6xl { max-width: 72rem; }
+        .w-full { width: 100%; }
+        .w-5 { width: 1.25rem; }
+        .h-5 { height: 1.25rem; }
+        .w-10 { width: 2.5rem; }
+        .w-24 { width: 6rem; }
+        .w-1of3 { width: 33.3333%; }
+        .w-1of4 { width: 25%; }
+
+        /* ---- Spacing ---- */
+        .p-3 { padding: 0.75rem; }
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .py-0-5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .py-1-5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .pb-2 { padding-bottom: 0.5rem; }
+        .pb-4 { padding-bottom: 1rem; }
+        .pb-5 { padding-bottom: 1.25rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mr-1 { margin-right: 0.25rem; }
+        .mr-2 { margin-right: 0.5rem; }
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .space-y-6 > * + * { margin-top: 1.5rem; }
+
+        /* ---- Borders / radius / shadow ---- */
+        .border { border-width: 1px; border-style: solid; border-color: var(--slate-200); }
+        .border-b { border-bottom-width: 1px; border-bottom-style: solid; }
+        .border-r { border-right-width: 1px; border-right-style: solid; }
+        .border-l-4 { border-left-width: 4px; border-left-style: solid; }
+        .border-collapse { border-collapse: collapse; }
+        .border-slate-100 { border-color: var(--slate-100); }
+        .border-slate-200 { border-color: var(--slate-200); }
+        .border-slate-300 { border-color: var(--slate-300); }
+        .border-purple-200 { border-color: var(--purple-200); }
+        .border-red-200 { border-color: var(--red-200); }
+        .border-red-500 { border-color: var(--red-500); }
+        .divide-y > * + * { border-top-width: 1px; border-top-style: solid; }
+        .divide-slate-100 > * + * { border-top-color: var(--slate-100); }
+        .divide-slate-200 > * + * { border-top-color: var(--slate-200); }
+
+        .rounded { border-radius: 0.25rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-full { border-radius: 9999px; }
+
+        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .shadow-sticky-col { box-shadow: 1px 0 0 0 var(--slate-100); }
+
+        /* ---- Typography ---- */
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+        .text-10 { font-size: 10px; }
+        .font-normal { font-weight: 400; }
+        .font-medium { font-weight: 500; }
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .font-mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+        .tracking-tight { letter-spacing: -0.025em; }
+        .tracking-wide { letter-spacing: 0.025em; }
+        .tracking-wider { letter-spacing: 0.05em; }
+        .leading-relaxed { line-height: 1.625; }
+        .uppercase { text-transform: uppercase; }
+        .italic { font-style: italic; }
+        .whitespace-nowrap { white-space: nowrap; }
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+
+        /* ---- Colors: text ---- */
+        .text-slate-300 { color: var(--slate-300); }
+        .text-slate-400 { color: var(--slate-400); }
+        .text-slate-500 { color: var(--slate-500); }
+        .text-slate-600 { color: var(--slate-600); }
+        .text-slate-700 { color: var(--slate-700); }
+        .text-slate-800 { color: var(--slate-800); }
+        .text-slate-900 { color: var(--slate-900); }
+        .text-blue-500 { color: var(--blue-500); }
+        .text-purple-500 { color: var(--purple-500); }
+        .text-purple-600 { color: var(--purple-600); }
+        .text-purple-700 { color: var(--purple-700); }
+        .text-red-600 { color: var(--red-600); }
+        .text-red-700 { color: var(--red-700); }
+        .text-emerald-700 { color: var(--emerald-700); }
+        .text-white { color: #ffffff; }
+
+        /* ---- Colors: background ---- */
+        .bg-white { background-color: #ffffff; }
+        .bg-slate-100 { background-color: var(--slate-100); }
+        .bg-slate-200 { background-color: var(--slate-200); }
+        .bg-slate-300 { background-color: var(--slate-300); }
+        .bg-slate-700 { background-color: var(--slate-700); }
+        .bg-slate-800 { background-color: var(--slate-800); }
+        .bg-blue-600 { background-color: var(--blue-600); }
+        .bg-purple-100 { background-color: var(--purple-100); }
+        .bg-red-50 { background-color: var(--red-50); }
+        .bg-red-100 { background-color: var(--red-100); }
+        .bg-emerald-100 { background-color: var(--emerald-100); }
+
+        .min-h-100 { min-height: 100px; }
+        .min-h-120 { min-height: 120px; }
+        .placeholder-slate-400::placeholder { color: var(--slate-400); opacity: 1; }
+
+        /* ---- Interactive states ---- */
+        .outline-none { outline: none; }
+        .transition { transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); }
+        .transition-colors { transition: background-color 150ms, border-color 150ms, color 150ms; }
+        .duration-300 { transition-duration: 300ms; }
+
+        .hover-bg-blue-700:hover { background-color: var(--blue-700); }
+        .hover-bg-red-100:hover { background-color: var(--red-100); }
+        .hover-bg-slate-200:hover { background-color: var(--slate-200); }
+
+        .focus-border-blue-500:focus { border-color: var(--blue-500); }
+        .focus-ring-2:focus, .focus-ring-blue-500:focus, .focus-ring-purple-500:focus {
+            outline: none;
+        }
+        .focus-ring-blue-500:focus { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--blue-500); }
+        .focus-ring-purple-500:focus { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--purple-500); }
+
+        .active-scale-98:active { transform: scale(0.98); }
+
+        /* ---- Responsive: md (>=768px) and lg (>=1024px), matching Tailwind's defaults ---- */
+        @media (min-width: 768px) {
+            .md-flex-row { flex-direction: row; }
+            .md-items-center { align-items: center; }
+            .md-mt-0 { margin-top: 0; }
+            .md-p-8 { padding: 2rem; }
+            .md-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .md-col-span-2 { grid-column: span 2 / span 2; }
+        }
+
+        @media (min-width: 1024px) {
+            .lg-grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+            .lg-col-span-5 { grid-column: span 5 / span 5; }
+            .lg-col-span-7 { grid-column: span 7 / span 7; }
+        }
+
+        /* ---- Element defaults CAT relies on ---- */
+        table { width: 100%; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased p-4 md-p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <header class="flex flex-col md-flex-row md-items-center justify-between pb-4 border-b border-slate-200">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">CAT</h1>
+                <p class="text-slate-500 font-medium mt-1">Multi-Surface Court Assignment Tool</p>
+            </div>
+            <div class="mt-4 md-mt-0">
+                <span id="saveStatus" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase shadow-sm transition-colors duration-300">
+                    Local Storage Active
+                </span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg-grid-cols-12 gap-6">
+            
+            <!-- Left Column: Core Inputs -->
+            <div class="lg-col-span-5 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Tournament Setup
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-semibold text-sm mb-1 text-slate-700">Number of Courts Available</label>
+                            <input type="number" id="courtsCount" value="12" min="1" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg focus-ring-2 focus-ring-blue-500 focus-border-blue-500 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-sm text-slate-700 mb-1">Define Court Surfaces <span class="text-slate-400 font-normal">(Optional)</span></label>
+                            <p class="text-xs text-slate-500 mb-2">Format: <code>SurfaceName: 1, 2, 3</code></p>
+                            <textarea id="surfaceInput" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg focus-ring-2 focus-ring-blue-500 outline-none transition min-h-100 text-sm font-mono placeholder-slate-400" placeholder="Large Gravel: 1, 2, 3, 4&#10;Oyster Shell: 5, 6, 7, 8&#10;Hardpack: 9, 10, 11, 12"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-sm text-slate-700 mb-1">Match Pairings (Current Round)</label>
+                            <p class="text-xs text-slate-500 mb-2">Format: <code>Team A, Team B</code> &mdash; doubles teams can be written as <code>Bob/Bill</code></p>
+                            <textarea id="pairingsInput" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg focus-ring-2 focus-ring-blue-500 outline-none transition min-h-120 text-sm placeholder-slate-400" placeholder="Team 1, Team 2&#10;Team 3, Team 4&#10;Team 5, BYE"></textarea>
+                            <button onclick="formatToPairs()" class="mt-2 text-xs bg-slate-100 hover-bg-slate-200 text-slate-700 font-medium py-1-5 px-3 rounded transition" title="Convert a simple list of teams into comma-separated pairings">
+                                Auto-format list into pairs
+                            </button>
+                            <label class="mt-2 flex items-center text-xs text-slate-600 font-medium" title="If your list has one PLAYER per line instead of one team per line, check this to combine every 2 lines into a single 'Player/Player' doubles team before pairing them into matches.">
+                                <input type="checkbox" id="groupDoublesToggle" class="auto-save mr-1">
+                                List is one player per line &mdash; combine every 2 into a doubles team (Bob/Bill)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Settings & Execution -->
+            <div class="lg-col-span-7 space-y-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Algorithm Constraints & Settings
+                    </h2>
+
+                    <div class="grid grid-cols-1 md-grid-cols-2 gap-5">
+                        
+                        <!-- Usage Constraints -->
+                        <div class="col-span-1 md-col-span-2 grid grid-cols-1 md-grid-cols-2 gap-5 border-b border-slate-100 pb-5">
+                            <div>
+                                <label class="block font-semibold text-sm text-slate-700 mb-1">Showcase Courts</label>
+                                <p class="text-xs text-slate-500 mb-2 leading-relaxed">Prioritizes placing the top match (Match 1) on these select courts. Comma separated (e.g., 1, 2).</p>
+                                <input type="text" id="setShowcase" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg text-sm outline-none focus-ring-2 focus-ring-purple-500" placeholder="e.g., 1, 2">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-sm text-slate-700 mb-1">Court Usage Cap</label>
+                                <p class="text-xs text-slate-500 mb-2 leading-relaxed">Hard limit on the max number of times any single court can be played on across the tournament.</p>
+                                <input type="number" id="setUsageCap" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg text-sm outline-none focus-ring-2 focus-ring-purple-500" value="5" min="1">
+                            </div>
+                        </div>
+
+                        <!-- Penalty Weights -->
+                        <div>
+                            <label class="block font-semibold text-sm text-slate-700 mb-1">Consecutive Court Penalty</label>
+                            <p class="text-xs text-slate-500 mb-2 leading-relaxed">Cost for playing on the exact same court two rounds in a row.</p>
+                            <input type="number" id="setWeightConsecCourt" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg text-sm outline-none focus-ring-2 focus-ring-purple-500" value="100" min="0">
+                        </div>
+                        
+                        <div>
+                            <label class="block font-semibold text-sm text-slate-700 mb-1">Consecutive Surface Penalty</label>
+                            <p class="text-xs text-slate-500 mb-2 leading-relaxed">Cost for playing on the same surface type twice in a row.</p>
+                            <input type="number" id="setWeightConsecSurf" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg text-sm outline-none focus-ring-2 focus-ring-purple-500" value="40" min="0">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-sm text-slate-700 mb-1">Historical Court Penalty</label>
+                            <p class="text-xs text-slate-500 mb-2 leading-relaxed">Cost for returning to a court previously played in an earlier round.</p>
+                            <input type="number" id="setWeightHistCourt" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg text-sm outline-none focus-ring-2 focus-ring-purple-500" value="15" min="0">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-sm text-slate-700 mb-1">Surface Frequency Penalty</label>
+                            <p class="text-xs text-slate-500 mb-2 leading-relaxed">Multiplier cost added per past match played on a proposed surface.</p>
+                            <input type="number" id="setWeightSurfFreq" class="auto-save w-full border border-slate-300 px-3 py-2 rounded-lg text-sm outline-none focus-ring-2 focus-ring-purple-500" value="5" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="assignCourts()" class="flex-1 bg-blue-600 hover-bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-sm transition active-scale-98">
+                        Assign Courts & Balance Pairs
+                    </button>
+                    <button onclick="resetTournament()" class="bg-red-50 hover-bg-red-100 text-red-600 font-bold py-3 px-6 rounded-xl border border-red-200 transition active-scale-98">
+                        Reset
+                    </button>
+                </div>
+
+                <div id="errorMessage" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm font-medium"></div>
+
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 id="roundTitle" class="text-xl font-bold text-slate-800 mb-4">Current Round Assignments</h2>
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table id="resultsTable" class="w-full text-left border-collapse">
+                    <thead class="bg-slate-800 text-white text-sm uppercase tracking-wider">
+                        <tr>
+                            <th class="p-4 font-semibold w-24 text-center">Court</th>
+                            <th class="p-4 font-semibold w-1of4">Surface Type</th>
+                            <th class="p-4 font-semibold w-1of3">Team A</th>
+                            <th class="p-4 font-semibold w-1of3">Team B</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-sm">
+                        <tr><td colspan="4" class="p-8 text-center text-slate-500 italic">No matches assigned yet. Process a round to view results.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-4">Team History Map</h2>
+            <div class="overflow-x-auto table-container rounded-lg border border-slate-200 pb-2">
+                <table id="historyTable" class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead class="bg-slate-100 text-slate-700 text-sm uppercase tracking-wider border-b border-slate-200">
+                        <tr id="historyHeader">
+                            <th class="p-4 font-semibold border-r border-slate-200 w-1of4 sticky left-0 bg-slate-100 z-10">Team Name</th>
+                            <th class="p-4 font-semibold border-r border-slate-200 w-1of4">Surface Tallies</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        <tr><td colspan="2" class="p-8 text-center text-slate-500 italic">No history available.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'cat_v2_State';
+
+        // State variables managed in memory, and synced to local storage
+        let state = {
+            roundNumber: 0,
+            teamHistory: {},       // { "TeamName": { history: ["1", "BYE", "2"], surfaces: {"Gravel": 1} } }
+            globalCourtUsage: {},  // { "1": 3, "2": 1 }
+            currentAssignments: [],
+            inputs: {
+                courtsCount: 12,
+                surfaceText: "",
+                pairingsText: "",
+                settings: {
+                    showcase: "",
+                    cap: 5,
+                    wConsecCourt: 100,
+                    wConsecSurf: 40,
+                    wHistCourt: 15,
+                    wSurfFreq: 5
+                },
+                groupDoubles: false
+            }
+        };
+
+        /**
+         * Save state and inputs to local storage
+         */
+        function saveState() {
+            // Update input state from DOM elements
+            state.inputs.courtsCount = document.getElementById('courtsCount').value;
+            state.inputs.surfaceText = document.getElementById('surfaceInput').value;
+            state.inputs.pairingsText = document.getElementById('pairingsInput').value;
+            
+            state.inputs.settings.showcase = document.getElementById('setShowcase').value;
+            state.inputs.settings.cap = document.getElementById('setUsageCap').value;
+            state.inputs.settings.wConsecCourt = document.getElementById('setWeightConsecCourt').value;
+            state.inputs.settings.wConsecSurf = document.getElementById('setWeightConsecSurf').value;
+            state.inputs.settings.wHistCourt = document.getElementById('setWeightHistCourt').value;
+            state.inputs.settings.wSurfFreq = document.getElementById('setWeightSurfFreq').value;
+            state.inputs.groupDoubles = document.getElementById('groupDoublesToggle').checked;
+
+            // Serialize and save
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            showSaveStatus("Saved to Storage");
+        }
+
+        /**
+         * Load state from local storage on initialization
+         */
+        function loadState() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    // Merge parsed data into existing structure to avoid missing keys from old versions
+                    state = { ...state, ...parsed };
+                    
+                    // Restore DOM Input Values
+                    if (state.inputs) {
+                        document.getElementById('courtsCount').value = state.inputs.courtsCount || 12;
+                        document.getElementById('surfaceInput').value = state.inputs.surfaceText || "";
+                        document.getElementById('pairingsInput').value = state.inputs.pairingsText || "";
+                        
+                        document.getElementById('setShowcase').value = state.inputs.settings.showcase || "";
+                        document.getElementById('setUsageCap').value = state.inputs.settings.cap || 5;
+                        document.getElementById('setWeightConsecCourt').value = state.inputs.settings.wConsecCourt || 100;
+                        document.getElementById('setWeightConsecSurf').value = state.inputs.settings.wConsecSurf || 40;
+                        document.getElementById('setWeightHistCourt').value = state.inputs.settings.wHistCourt || 15;
+                        document.getElementById('setWeightSurfFreq').value = state.inputs.settings.wSurfFreq || 5;
+                        document.getElementById('groupDoublesToggle').checked = !!state.inputs.groupDoubles;
+                    }
+                    
+                    showSaveStatus("Session Restored");
+                } catch (e) {
+                    console.error("Failed to parse saved tournament state.", e);
+                }
+            }
+        }
+
+        /**
+         * Provides visual feedback when data is saved to storage
+         */
+        function showSaveStatus(msg) {
+            const badge = document.getElementById('saveStatus');
+            badge.innerText = msg;
+            badge.classList.remove('bg-emerald-100', 'text-emerald-700');
+            badge.classList.add('bg-blue-100', 'text-blue-700');
+            
+            setTimeout(() => {
+                badge.classList.remove('bg-blue-100', 'text-blue-700');
+                badge.classList.add('bg-emerald-100', 'text-emerald-700');
+                badge.innerText = "Local Storage Active";
+            }, 2500);
+        }
+
+        /**
+         * Initializes auto-save event listeners on all text/number inputs
+         */
+        function setupAutoSave() {
+            const inputs = document.querySelectorAll('.auto-save');
+            inputs.forEach(input => {
+                input.addEventListener('change', saveState);
+            });
+        }
+
+        /**
+         * If a line is exactly "/" on its own, treat it as a separator
+         * joining the line before it and the line after it into one
+         * "PlayerA/PlayerB" team name, e.g.:
+         *   Abe
+         *   /
+         *   Bob
+         * becomes the single entry "Abe/Bob". This runs unconditionally,
+         * independent of the "group doubles" checkbox, since a bare "/"
+         * line can never be a valid player/team name on its own - there's
+         * no ambiguity to guard against.
+         */
+        function collapseSlashSeparatorLines(lines) {
+            const result = [];
+            let i = 0;
+            while (i < lines.length) {
+                if (lines[i] === '/') {
+                    if (result.length > 0 && i + 1 < lines.length) {
+                        const prev = result.pop();
+                        result.push(`${prev}/${lines[i + 1]}`);
+                        i += 2;
+                        continue;
+                    }
+                    // A stray "/" with nothing on one side to join - drop it
+                    // rather than let it become a bogus "team".
+                    i += 1;
+                    continue;
+                }
+                result.push(lines[i]);
+                i += 1;
+            }
+            return result;
+        }
+
+        /**
+         * Combines consecutive PLAIN player-name lines into "Player/Player"
+         * team names. Lines that already contain a "/" are left alone and
+         * passed through as already-complete teams - this keeps the result
+         * correct even if the checkbox is left on for input that already
+         * has some or all doubles teams pre-joined (inline or via a "/"
+         * separator line collapsed above).
+         */
+        function groupPlayersIntoDoublesTeams(lines) {
+            const teams = [];
+            let i = 0;
+            while (i < lines.length) {
+                if (lines[i].includes('/')) {
+                    teams.push(lines[i]);
+                    i += 1;
+                    continue;
+                }
+                if (i + 1 < lines.length && !lines[i + 1].includes('/')) {
+                    teams.push(`${lines[i]}/${lines[i + 1]}`);
+                    i += 2;
+                } else {
+                    // No safe plain-name partner to combine with - keep as its own team
+                    // rather than merging it into an already-complete team.
+                    teams.push(lines[i]);
+                    i += 1;
+                }
+            }
+            return teams;
+        }
+
+        /**
+         * If a comma-free line already contains two team names separated by
+         * a "wide gap" - a tab, or 2+ consecutive spaces - rather than a
+         * comma (common when pasting two spreadsheet columns), split it
+         * into exactly those two teams. Returns null if the line doesn't
+         * cleanly split into exactly two non-empty pieces this way, so
+         * callers can fall back to treating it as a single team name.
+         * A single space is deliberately NOT treated as a separator here,
+         * since team names themselves may legitimately contain one (e.g.
+         * "Iron Boules") - only a clearly wider gap is used as the signal.
+         */
+        function splitWideGapMatchLine(line) {
+            const parts = line.split(/\t+| {2,}/).map(s => s.trim()).filter(s => s.length > 0);
+            return parts.length === 2 ? parts : null;
+        }
+
+        /**
+         * Converts a simple list of teams into A,B pairings. Handles doubles
+         * team names in a couple of common paste formats:
+         *   - Already written inline, e.g. "Bob/Bill" on one line.
+         *   - Written across three lines with a lone "/" separator, e.g.
+         *     "Bob" / "/" / "Bill".
+         *   - One player per line with no slash at all, if the "group
+         *     doubles" checkbox is on - every 2 consecutive players are
+         *     combined into a single "Player/Player" team name first.
+         * It also recognizes lines that are already a complete match, with
+         * the two teams separated by a tab or a wide (2+ space) gap instead
+         * of a comma - those are used as-is rather than paired with a
+         * neighboring line. Any lines that are still just a single team
+         * name after all of the above are paired up by position, two at a
+         * time, same as always.
+         */
+        function formatToPairs() {
+            const textarea = document.getElementById('pairingsInput');
+            let lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) return;
+
+            lines = collapseSlashSeparatorLines(lines);
+
+            const groupDoubles = document.getElementById('groupDoublesToggle').checked;
+            if (groupDoubles) {
+                lines = groupPlayersIntoDoublesTeams(lines);
+            }
+
+            let result = [];
+            let pending = [];
+
+            function flushPending() {
+                for (let i = 0; i < pending.length; i += 2) {
+                    if (i + 1 < pending.length) result.push(`${pending[i]}, ${pending[i + 1]}`);
+                    else result.push(`${pending[i]}, BYE`);
+                }
+                pending = [];
+            }
+
+            for (let line of lines) {
+                if (line.includes(',')) {
+                    // Already a fully-specified match line - leave it alone.
+                    flushPending();
+                    result.push(line);
+                    continue;
+                }
+                const wideGapParts = splitWideGapMatchLine(line);
+                if (wideGapParts) {
+                    flushPending();
+                    result.push(`${wideGapParts[0]}, ${wideGapParts[1]}`);
+                    continue;
+                }
+                // Just a single team name - queue it to be paired by position.
+                pending.push(line);
+            }
+            flushPending();
+
+            textarea.value = result.join('\n');
+            saveState(); // Trigger save on format
+        }
+
+        /**
+         * Hard reset of the tournament state
+         */
+        function resetTournament() {
+            if(confirm("Erase all tournament progression data and start over? (Settings will be preserved)")) {
+                // Reset core tournament state but keep inputs/settings
+                state.roundNumber = 0;
+                state.teamHistory = {};
+                state.globalCourtUsage = {};
+                state.currentAssignments = [];
+                
+                document.getElementById('pairingsInput').value = '';
+                showError("");
+                saveState(); // Commit wipe to storage
+                renderUI();
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            if (msg) {
+                el.innerText = msg;
+                el.classList.remove('hidden');
+            } else {
+                el.innerText = "";
+                el.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Parses the surface mapping from the text area.
+         */
+        function parseSurfaces() {
+            let mapping = {};
+            const lines = document.getElementById('surfaceInput').value.split('\n');
+            for (let line of lines) {
+                if (!line.includes(':')) continue;
+                let [surfaceName, courtsStr] = line.split(':');
+                surfaceName = surfaceName.trim();
+                let courts = courtsStr.split(',').map(c => parseInt(c.trim())).filter(c => !isNaN(c));
+                courts.forEach(c => mapping[c] = surfaceName);
+            }
+            return mapping;
+        }
+
+        /**
+         * Gathers all constraints and weights from the Settings UI.
+         */
+        /**
+         * Parses a numeric input, falling back to a default ONLY when the value is
+         * missing/invalid (blank, non-numeric). Unlike `parseInt(x) || fallback`,
+         * this correctly preserves an intentionally-entered 0.
+         */
+        function parseNumericSetting(rawValue, fallback) {
+            const n = parseInt(rawValue, 10);
+            return isNaN(n) ? fallback : n;
+        }
+
+        function getAlgorithmSettings() {
+            const cap = parseNumericSetting(document.getElementById('setUsageCap').value, Infinity);
+            return {
+                showcaseCourts: document.getElementById('setShowcase').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)),
+                // A cap of 0 would make every court unusable, so treat it the same as "no cap".
+                maxUses: cap <= 0 ? Infinity : cap,
+                weights: {
+                    consecutiveCourt: parseNumericSetting(document.getElementById('setWeightConsecCourt').value, 100),
+                    consecutiveSurface: parseNumericSetting(document.getElementById('setWeightConsecSurf').value, 40),
+                    historicalCourt: parseNumericSetting(document.getElementById('setWeightHistCourt').value, 15),
+                    surfaceFrequency: parseNumericSetting(document.getElementById('setWeightSurfFreq').value, 5),
+                }
+            };
+        }
+
+        /**
+         * Normalizes a team name for use as a lookup key: trims outer whitespace,
+         * collapses internal whitespace, and lowercases. This prevents "Team A",
+         * " Team A", and "team a" from being tracked as three separate teams,
+         * and collapses "BYE"/"Bye"/"bye" into a single placeholder entry.
+         */
+        function normalizeTeamKey(name) {
+            return name.trim().replace(/\s+/g, ' ').toLowerCase();
+        }
+
+        /**
+         * Escapes a user-supplied string before it's interpolated into innerHTML,
+         * so a stray '<', '>', or '"' in a team/surface name can't break the
+         * table markup.
+         */
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        /**
+         * Ensures a team exists in the history object. Keyed by a normalized
+         * version of the name so minor typing variations (case/whitespace)
+         * across rounds still refer to the same team. Keeps the first-seen
+         * casing as the display name.
+         */
+        function getTeamHistory(teamName) {
+            const key = normalizeTeamKey(teamName);
+            if (!state.teamHistory[key]) {
+                state.teamHistory[key] = { displayName: teamName.trim(), history: [], surfaces: {} };
+            }
+            return state.teamHistory[key];
+        }
+
+        /**
+         * Calculates the total penalty cost of placing a specific match onto a specific court.
+         */
+        function calculateCost(teamAName, teamBName, courtNum, surfaceMap, globalCourtUsage, matchIndex, settings) {
+            let cost = 0;
+            let tA = getTeamHistory(teamAName);
+            let tB = getTeamHistory(teamBName);
+
+            // Constraint: Court Usage Cap (Hard limit)
+            if ((globalCourtUsage[courtNum] || 0) >= settings.maxUses) return Infinity;
+
+            const targetSurface = surfaceMap[courtNum] || "Standard";
+            const weights = settings.weights;
+
+            // Helper to evaluate a single team's penalty against this court
+            function evaluateTeamPenalty(team) {
+                if (team.history.length === 0) return 0;
+                let penalty = 0;
+                
+                // Extract last actual court played (skip BYEs)
+                let lastCourt = null;
+                for (let i = team.history.length - 1; i >= 0; i--) {
+                    if (team.history[i] !== "-" && team.history[i] !== "BYE") {
+                        lastCourt = team.history[i];
+                        break;
+                    }
+                }
+                
+                let lastSurface = lastCourt ? (surfaceMap[lastCourt] || "Standard") : null;
+
+                // 1. Consecutive Same Court Penalty
+                if (lastCourt === courtNum) penalty += weights.consecutiveCourt;
+
+                // 2. Consecutive Same Surface Type Penalty
+                if (lastSurface === targetSurface) penalty += weights.consecutiveSurface;
+
+                // 3. Historical Court Repeat Penalty
+                const allCourtsPlayed = team.history.filter(c => c !== "-" && c !== "BYE");
+                if (allCourtsPlayed.includes(courtNum) && lastCourt !== courtNum) {
+                    penalty += weights.historicalCourt;
+                }
+
+                // 4. Surface Frequency Penalty (Multiplier for past matches on this surface)
+                const timesOnSurface = team.surfaces[targetSurface] || 0;
+                penalty += (timesOnSurface * weights.surfaceFrequency);
+
+                return penalty;
+            }
+
+            cost += evaluateTeamPenalty(tA);
+            cost += evaluateTeamPenalty(tB);
+
+            // 5. Showcase Court Bonus (Negative Penalty for top-seeded matches)
+            if (settings.showcaseCourts.includes(courtNum)) {
+                if (matchIndex === 0) {
+                    cost -= 500; // Match 1 strongly pulled to showcase
+                } else if (matchIndex === 1) {
+                    cost -= 250; // Match 2 moderately pulled
+                }
+            }
+
+            // 6. Global Court Balancing (Soft Cap: encourages using empty/lesser-used courts)
+            cost += (globalCourtUsage[courtNum] || 0) * 10;
+
+            // Tie-breaker Randomization (Prevents predictable stalemates)
+            cost += Math.random() * 2; 
+
+            return cost;
+        }
+
+        /**
+         * Solves a square minimum-cost assignment problem (Kuhn-Munkres / Hungarian
+         * algorithm), O(n^3). Returns an array `result` where result[i] is the
+         * column index assigned to row i. Used to find the single best combination
+         * of matches -> courts across the WHOLE round at once, rather than
+         * greedily locking in one match at a time.
+         */
+        function hungarianAssignment(costMatrix) {
+            const n = costMatrix.length;
+            const INF = Infinity;
+            const u = new Array(n + 1).fill(0);
+            const v = new Array(n + 1).fill(0);
+            const p = new Array(n + 1).fill(0); // p[j] = row currently assigned to column j
+            const way = new Array(n + 1).fill(0);
+
+            for (let i = 1; i <= n; i++) {
+                p[0] = i;
+                let j0 = 0;
+                const minv = new Array(n + 1).fill(INF);
+                const used = new Array(n + 1).fill(false);
+                do {
+                    used[j0] = true;
+                    const i0 = p[j0];
+                    let delta = INF, j1 = -1;
+                    for (let j = 1; j <= n; j++) {
+                        if (!used[j]) {
+                            const cur = costMatrix[i0 - 1][j - 1] - u[i0] - v[j];
+                            if (cur < minv[j]) { minv[j] = cur; way[j] = j0; }
+                            if (minv[j] < delta) { delta = minv[j]; j1 = j; }
+                        }
+                    }
+                    for (let j = 0; j <= n; j++) {
+                        if (used[j]) { u[p[j]] += delta; v[j] -= delta; }
+                        else { minv[j] -= delta; }
+                    }
+                    j0 = j1;
+                } while (p[j0] !== 0);
+
+                do {
+                    const j1 = way[j0];
+                    p[j0] = p[j1];
+                    j0 = j1;
+                } while (j0);
+            }
+
+            const result = new Array(n).fill(-1);
+            for (let j = 1; j <= n; j++) {
+                if (p[j] > 0) result[p[j] - 1] = j - 1;
+            }
+            return result;
+        }
+
+        function assignCourts() {
+            showError("");
+            const courtsCount = parseInt(document.getElementById('courtsCount').value);
+            const pairingsText = document.getElementById('pairingsInput').value.trim();
+            const surfaceMap = parseSurfaces();
+            const settings = getAlgorithmSettings();
+
+            if (!pairingsText) return;
+
+            const matches = [];
+            const rawLines = pairingsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            let extraFieldsWarning = false;
+            let unparsedLines = [];
+            for (let line of rawLines) {
+                let parts = line.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                if (parts.length < 2) {
+                    unparsedLines.push(line);
+                    continue;
+                }
+                if (parts.length > 2) extraFieldsWarning = true;
+                matches.push({ teamA: parts[0], teamB: parts[1] });
+            }
+
+            if (matches.length === 0) {
+                showError('Couldn\'t find any valid "Team A, Team B" pairings in what you entered. If your list isn\'t already comma-separated (for example, teams separated by spaces or on their own lines), click "Auto-format list into pairs" first, then try again.');
+                return;
+            }
+
+            if (unparsedLines.length > 0) {
+                showError(`${unparsedLines.length} line(s) couldn't be read as a match and would have been skipped, e.g. "${unparsedLines[0]}". Click "Auto-format list into pairs" to fix the formatting automatically, then try again.`);
+                return;
+            }
+
+            if (matches.length > courtsCount) {
+                showError("Not enough courts to accommodate all matches. Please increase courts or add Byes."); 
+                return;
+            }
+
+            // Detect a team appearing in more than one match this round (e.g. copy/paste error)
+            const seenTeams = new Map();
+            for (let m of matches) {
+                for (let t of [m.teamA, m.teamB]) {
+                    if (t.toUpperCase() === "BYE") continue;
+                    const key = normalizeTeamKey(t);
+                    if (seenTeams.has(key)) {
+                        showError(`"${t}" appears in more than one match this round. Please fix the pairings before assigning courts.`);
+                        return;
+                    }
+                    seenTeams.set(key, true);
+                }
+            }
+
+            state.roundNumber++;
+
+            // Split off BYE matches (no court needed) from real matches that need a court
+            const byeAssignments = [];
+            const realMatches = []; // { teamA, teamB, matchIndex } - matchIndex preserved for showcase-court logic
+            matches.forEach((m, idx) => {
+                if (m.teamA.toUpperCase() === "BYE" || m.teamB.toUpperCase() === "BYE") {
+                    byeAssignments.push({ court: "BYE", surface: "N/A", teamA: m.teamA, teamB: m.teamB });
+                } else {
+                    realMatches.push({ teamA: m.teamA, teamB: m.teamB, matchIndex: idx });
+                }
+            });
+
+            let assignments = [...byeAssignments];
+
+            if (realMatches.length > 0) {
+                const courts = Array.from({ length: courtsCount }, (_, i) => i + 1);
+                const n = courts.length; // matches.length <= courtsCount was already validated above
+                const SENTINEL = 1e7; // stand-in for Infinity so the matrix stays numeric
+
+                // Build an n x n cost matrix. Rows beyond realMatches.length are
+                // "dummy" matches (cost 0 to every court) that exist purely to make
+                // the matrix square; they soak up leftover courts without affecting
+                // which courts the real matches get, since their contribution to
+                // total cost is constant regardless of which court they take.
+                const costMatrix = [];
+                for (let i = 0; i < n; i++) {
+                    const row = [];
+                    for (let j = 0; j < n; j++) {
+                        if (i < realMatches.length) {
+                            const match = realMatches[i];
+                            const rawCost = calculateCost(
+                                match.teamA, match.teamB, courts[j],
+                                surfaceMap, state.globalCourtUsage, match.matchIndex, settings
+                            );
+                            row.push(rawCost === Infinity ? SENTINEL : rawCost);
+                        } else {
+                            row.push(0);
+                        }
+                    }
+                    costMatrix.push(row);
+                }
+
+                // Solve for the single combination of match->court assignments that
+                // minimizes the TOTAL penalty across the whole round (not just each
+                // match in isolation), as described in the user manual.
+                const colForRow = hungarianAssignment(costMatrix);
+
+                for (let i = 0; i < realMatches.length; i++) {
+                    const match = realMatches[i];
+                    const j = colForRow[i];
+                    if (j === -1 || costMatrix[i][j] >= SENTINEL) {
+                        showError(`Algorithm failed to find a valid court for ${match.teamA} vs ${match.teamB}. Consider increasing the Court Usage Cap or adding more courts.`);
+                        state.roundNumber--;
+                        return;
+                    }
+                    assignments.push({
+                        court: courts[j],
+                        surface: surfaceMap[courts[j]] || "Standard",
+                        teamA: match.teamA,
+                        teamB: match.teamB
+                    });
+                }
+            }
+
+            if (extraFieldsWarning) {
+                showError("Note: one or more pairing lines had more than two comma-separated names; only the first two were used per line.");
+            }
+
+            // Commit Data for the Round
+            state.currentAssignments = assignments.sort((a, b) => a.court === "BYE" ? 1 : b.court === "BYE" ? -1 : a.court - b.court);
+
+            for (let a of assignments) {
+                let tA = getTeamHistory(a.teamA);
+                let tB = getTeamHistory(a.teamB);
+                
+                // Backfill gaps if team skipped previous rounds
+                while(tA.history.length < state.roundNumber - 1) tA.history.push("-");
+                while(tB.history.length < state.roundNumber - 1) tB.history.push("-");
+
+                tA.history.push(a.court);
+                tB.history.push(a.court);
+                
+                if (a.court !== "BYE") {
+                    // Track Surface Played (for frequencies)
+                    tA.surfaces[a.surface] = (tA.surfaces[a.surface] || 0) + 1;
+                    tB.surfaces[a.surface] = (tB.surfaces[a.surface] || 0) + 1;
+                    
+                    // Track global usage
+                    state.globalCourtUsage[a.court] = (state.globalCourtUsage[a.court] || 0) + 1;
+                }
+            }
+
+            document.getElementById('pairingsInput').value = '';
+            
+            // Persist the new round data and re-render
+            saveState();
+            renderUI();
+        }
+
+        function renderUI() {
+            const surfaceMap = parseSurfaces();
+            
+            // 1. Render Current Round Assignments
+            const assignTbody = document.getElementById('resultsTable').querySelector('tbody');
+            if (state.roundNumber === 0 || state.currentAssignments.length === 0) {
+                document.getElementById('roundTitle').innerText = "Current Round Assignments";
+                assignTbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500 italic">No matches assigned yet. Process a round to view results.</td></tr>';
+            } else {
+                document.getElementById('roundTitle').innerText = `Round ${state.roundNumber} Assignments`;
+                assignTbody.innerHTML = '';
+                for (let a of state.currentAssignments) {
+                    const tr = document.createElement('tr');
+                    
+                    let courtMarkup;
+                    if (a.court === "BYE") {
+                        courtMarkup = `<span class="bg-slate-300 text-slate-700 px-3 py-1 rounded text-xs font-bold uppercase">BYE</span>`;
+                    } else {
+                        courtMarkup = `<span class="bg-blue-600 text-white px-3 py-1 rounded shadow-sm text-sm font-bold block mx-auto w-10 text-center">${a.court}</span>`;
+                    }
+
+                    let surfaceMarkup = a.surface === "N/A" ? "-" : `<span class="bg-purple-100 text-purple-700 border border-purple-200 px-2 py-0-5 rounded text-xs font-semibold whitespace-nowrap">${escapeHtml(a.surface)}</span>`;
+
+                    tr.innerHTML = `
+                        <td class="p-3 text-center border-b border-slate-100">${courtMarkup}</td>
+                        <td class="p-3 border-b border-slate-100">${surfaceMarkup}</td>
+                        <td class="p-3 border-b border-slate-100 font-medium text-slate-900">${escapeHtml(a.teamA)}</td>
+                        <td class="p-3 border-b border-slate-100 font-medium text-slate-900">${escapeHtml(a.teamB)}</td>
+                    `;
+                    assignTbody.appendChild(tr);
+                }
+            }
+
+            // 2. Render Team History Tracking
+            const headerRow = document.getElementById('historyHeader');
+            const historyTbody = document.getElementById('historyTable').querySelector('tbody');
+            
+            headerRow.innerHTML = `
+                <th class="p-4 font-semibold border-r border-slate-200 w-1of4 sticky left-0 bg-slate-100 z-10">Team Name</th>
+                <th class="p-4 font-semibold border-r border-slate-200 w-1of4">Surface Tallies</th>
+            `;
+            
+            for(let i = 1; i <= state.roundNumber; i++) {
+                const th = document.createElement('th'); 
+                th.className = "p-4 font-semibold text-center border-r border-slate-200 text-slate-500";
+                th.innerText = `R${i}`; 
+                headerRow.appendChild(th);
+            }
+
+            historyTbody.innerHTML = '';
+            // teamHistory is now keyed by a normalized (lowercased) string, with the
+            // real display name stored on the record itself - sort/display by that.
+            const teamKeys = Object.keys(state.teamHistory)
+                .filter(k => state.teamHistory[k].displayName.toUpperCase() !== "BYE")
+                .sort((a, b) => state.teamHistory[a].displayName.localeCompare(state.teamHistory[b].displayName));
+
+            if (teamKeys.length === 0) {
+                historyTbody.innerHTML = `<tr><td colspan="${state.roundNumber + 2}" class="p-8 text-center text-slate-500 italic">No history available.</td></tr>`;
+                return;
+            }
+
+            for (let key of teamKeys) {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                let tData = state.teamHistory[key];
+                
+                // Format Surface summary nicely
+                let surfaceSummary = Object.entries(tData.surfaces).map(([surf, count]) => `<span class="bg-slate-200 text-slate-700 px-2 py-0-5 rounded-full text-xs font-semibold whitespace-nowrap mr-1 mb-1 inline-block">${escapeHtml(surf)}: ${count}</span>`).join('') || "<span class='text-slate-400'>None</span>";
+                
+                let html = `
+                    <td class="p-3 border-r border-slate-100 font-medium text-slate-800 sticky left-0 bg-white z-10 shadow-sticky-col">${escapeHtml(tData.displayName)}</td>
+                    <td class="p-3 border-r border-slate-100">${surfaceSummary}</td>
+                `;
+                
+                for(let i = 0; i < state.roundNumber; i++) {
+                    let court = tData.history[i] || "-";
+                    if (court === "BYE") {
+                        html += `<td class="p-3 text-center border-r border-slate-100"><span class="bg-slate-200 text-slate-600 px-2 py-1 rounded text-xs font-bold uppercase">BYE</span></td>`;
+                    } else if (court !== "-") {
+                        let surf = surfaceMap[court] || "Standard";
+                        html += `
+                            <td class="p-3 text-center border-r border-slate-100 whitespace-nowrap">
+                                <span class="bg-slate-700 text-white px-2 py-0-5 rounded shadow-sm text-xs font-bold mr-1">${court}</span>
+                                <span class="text-10 text-purple-600 font-bold uppercase tracking-wide">${escapeHtml(surf.substring(0,3))}</span>
+                            </td>
+                        `;
+                    } else {
+                        html += `<td class="p-3 text-center border-r border-slate-100 text-slate-300">-</td>`;
+                    }
+                }
+                tr.innerHTML = html;
+                historyTbody.appendChild(tr);
+            }
+        }
+
+        // Initialize UI, Load State, and Setup listeners on load
+        window.onload = () => {
+            loadState();
+            setupAutoSave();
+            renderUI();
+        };
+    </script>
+</body>
+</html>
