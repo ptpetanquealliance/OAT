@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Court Assignment Tool (CAT) - Multi-Surface Calculator (Local Storage)</title>
+    <title>OAT (Outil d'attribution des terrains) - Multi-Surface Calculator (Local Storage)</title>
     <style>
         /* =====================================================================
-           CAT stylesheet - hand-written, zero external dependencies.
+           OAT stylesheet - hand-written, zero external dependencies.
            Replaces the Tailwind CDN runtime. Organized to mirror the utility
            classes previously supplied by Tailwind, so class names in the
            markup below are unchanged (a few that used characters CSS
@@ -305,7 +305,7 @@
             .lg-col-span-7 { grid-column: span 7 / span 7; }
         }
 
-        /* ---- Element defaults CAT relies on ---- */
+        /* ---- Element defaults OAT relies on ---- */
         table { width: 100%; }
     </style>
 </head>
@@ -315,8 +315,8 @@
         
         <header class="flex flex-col md-flex-row md-items-center justify-between pb-4 border-b border-slate-200">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">CAT</h1>
-                <p class="text-slate-500 font-medium mt-1">Multi-Surface Court Assignment Tool</p>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">OAT</h1>
+                <p class="text-slate-500 font-medium mt-1">Outil d'attribution des terrains &mdash; Multi-Surface Terrain Assignment Tool</p>
             </div>
             <div class="mt-4 md-mt-0">
                 <span id="saveStatus" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase shadow-sm transition-colors duration-300">
@@ -467,7 +467,8 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'cat_v2_State';
+        const STORAGE_KEY = 'oat_v2_State';
+        const LEGACY_STORAGE_KEY = 'cat_v2_State'; // pre-rename key (tool was formerly called "CAT"); migrated on load, see loadState()
 
         // State variables managed in memory, and synced to local storage
         let state = {
@@ -517,6 +518,17 @@
          * Load state from local storage on initialization
          */
         function loadState() {
+            // Migrate any data saved under the tool's old name ("CAT") before it
+            // was renamed to OAT, so returning users don't lose their tournament
+            // history. Only runs once: after migrating, the old key is removed.
+            if (!localStorage.getItem(STORAGE_KEY)) {
+                const legacyData = localStorage.getItem(LEGACY_STORAGE_KEY);
+                if (legacyData) {
+                    localStorage.setItem(STORAGE_KEY, legacyData);
+                    localStorage.removeItem(LEGACY_STORAGE_KEY);
+                }
+            }
+
             const savedData = localStorage.getItem(STORAGE_KEY);
             if (savedData) {
                 try {
