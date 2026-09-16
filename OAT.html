@@ -964,6 +964,11 @@
 
             if (!pairingsText) return;
 
+            if (!Number.isInteger(courtsCount) || courtsCount < 1) {
+                showError("Please enter a valid number of courts (1 or more) before assigning.");
+                return;
+            }
+
             const matches = [];
             const rawLines = pairingsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             let extraFieldsWarning = false;
